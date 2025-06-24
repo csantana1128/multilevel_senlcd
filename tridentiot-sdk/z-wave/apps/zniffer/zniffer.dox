@@ -1,0 +1,13 @@
+/**
+@page zniffer Zniffer
+
+@section zniffer_interface Interface on the DKNCZ20 board
+
+The Zniffer API is accessible via UART either through the USB connector or via the Tag connector,
+but it depends on the chosen binary. `.hex` files with "perseus_tag" have the UART
+configured for the Tag connector while `.hex` files with "perseus_usb" have the UART
+configured for the USB connector.
+
+The configuration of the UART is the same in both cases: 230400-8-N-1
+
+*/

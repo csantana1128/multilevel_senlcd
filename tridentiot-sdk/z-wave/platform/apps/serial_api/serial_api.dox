@@ -1,0 +1,13 @@
+/**
+@page serial_api Serial API
+
+@section serial_api_interface Interface on the DKNCZ20 board
+
+The Serial API is accessible via UART either through the USB connector or via the Tag connector,
+but it depends on the chosen binary. `.hex` files with "perseus_tag" have the UART
+configured for the Tag connector while `.hex` files with "perseus_usb" have the UART
+configured for the USB connector.
+
+The configuration of the UART is the same in both cases: 115200-8-N-1
+
+*/

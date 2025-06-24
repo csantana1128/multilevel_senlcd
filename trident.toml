@@ -1,0 +1,8 @@
+[project]
+name = "Multilevel_SenLCD"
+category = "z-wave"
+target = "T32CZ20B"
+default_hex = "dkncz20_usb_t32cz20_signed_combined.hex"
+
+[sdk]
+version = "v2025.05.00-beta00"
