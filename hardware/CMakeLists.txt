@@ -11,6 +11,7 @@ set(INCLUDES
   "${ZW_SDK_ROOT}/z-wave-stack/Apps/zwave_soc_multilevel_sensor/"
   "${TRIDENT_SDK_ROOT}/framework/utility/cli/"
   "${TRIDENT_SDK_ROOT}/framework/utility/printf/"
+  "${CMAKE_SOURCE_DIR}/app/custom/"
   $<TARGET_PROPERTY:ZAF,INTERFACE_INCLUDE_DIRECTORIES>
 )
 

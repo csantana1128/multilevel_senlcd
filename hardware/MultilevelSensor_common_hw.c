@@ -14,6 +14,9 @@
 #include <CC_Battery.h>
 #include <CC_MultilevelSensor_SensorHandlerTypes.h>
 
+#include "max6675.h"
+#include "st7565.h"
+
 #define MY_BATTERY_SPEC_LEVEL_FULL         3000  // My battery's 100% level (millivolts)
 #define MY_BATTERY_SPEC_LEVEL_EMPTY        2400  // My battery's 0% level (millivolts)
 
@@ -71,27 +74,26 @@ void app_hw_deep_sleep_wakeup_handler(void)
 
 bool cc_multilevel_sensor_air_temperature_interface_read_value(sensor_read_result_t* o_result, uint8_t i_scale)
 {
-  static int32_t  temperature_celsius = 3220;
-     adc_init();
-  /*
-   * Simple example how to use the ADC to measure the temperature
-   */
 
-  adc_get_temp(&temperature_celsius);
-  /* Turn off the ADC when the conversion is finished to save power. */
-  adc_enable(false);
+  int temperature_x100;
+  max6675_status_t status = max6675_read_temperature(&temperature_x100);
 
+  if (status != MAX6675_OK) {
+    return true;
+  }
+
+  int  temperature_celsius = temperature_x100;
 
   if(o_result != NULL)
   {
     memset(o_result, 0, sizeof(sensor_read_result_t));
-    o_result->precision  = SENSOR_READ_RESULT_PRECISION_3;
+    o_result->precision  = SENSOR_READ_RESULT_PRECISION_2;
     o_result->size_bytes = SENSOR_READ_RESULT_SIZE_4;
 
     if(i_scale == SENSOR_SCALE_FAHRENHEIT)
     {
-      float temperature_celsius_divided = (float)temperature_celsius/(float)1000;
-      int32_t temperature_fahrenheit = (int32_t)((temperature_celsius_divided * ((float)9/(float)5) + (float)32)*1000);
+      float temperature_celsius_divided = (float)temperature_celsius/(float)100;
+      int temperature_fahrenheit = (int)((temperature_celsius_divided * ((float)9/(float)5) + (float)32)*100);
 
       o_result->raw_result[3] = (uint8_t)(temperature_fahrenheit&0xFF);
       o_result->raw_result[2] = (uint8_t)((temperature_fahrenheit>>8 )&0xFF);
@@ -106,6 +108,7 @@ bool cc_multilevel_sensor_air_temperature_interface_read_value(sensor_read_resul
       o_result->raw_result[0] = (uint8_t)((temperature_celsius>>24)&0xFF);
     }
   }
+  display_temperature(temperature_celsius);
 
   return true;
 }

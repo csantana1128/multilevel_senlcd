@@ -1,5 +1,5 @@
 [project]
-name = "Multilevel_SenLCD"
+name = "multilevel_max6675"
 category = "z-wave"
 target = "T32CZ20B"
 default_hex = "dkncz20_usb_t32cz20_signed_combined.hex"
