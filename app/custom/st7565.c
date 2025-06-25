@@ -1,0 +1,286 @@
+#include "tr_hal_spi.h"
+#include "T32CZ20_spi.h"
+#include "tr_hal_gpio.h"
+#include "T32CZ20_gpio.h"
+#include "sysctrl.h"
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+#include "st7565.h"
+#define DEBUGPRINT
+#include "DebugPrint.h"
+
+const uint8_t font5x7[] = {
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x5F,0x00,0x00,0x00,0x07,0x00,0x07,0x00,0x14,0x7F,0x14,0x7F,0x14,0x24,0x2A,0x7F,0x2A,0x12,0x23,0x13,0x08,0x64,0x62,0x36,0x49,0x55,0x22,0x50,0x00,0x05,0x03,
+    0x00,0x00,0x00,0x1C,0x22,0x41,0x00,0x00,0x41,0x22,0x1C,0x00,0x14,0x08,0x3E,0x08,0x14,0x08,0x08,0x3E,0x08,0x08,0x00,0x50,0x30,0x00,0x00,0x08,0x08,0x08,0x08,0x08,0x00,0x60,0x60,0x00,0x00,0x20,
+    0x10,0x08,0x04,0x02,0x3E,0x51,0x49,0x45,0x3E,0x00,0x42,0x7F,0x40,0x00,0x42,0x61,0x51,0x49,0x46,0x21,0x41,0x45,0x4B,0x31,0x18,0x14,0x12,0x7F,0x10,0x27,0x45,0x45,0x45,0x39,0x3C,0x4A,0x49,0x49,
+    0x30,0x01,0x71,0x09,0x05,0x03,0x36,0x49,0x49,0x49,0x36,0x06,0x49,0x49,0x29,0x1E,0x00,0x36,0x36,0x00,0x00,0x00,0x56,0x36,0x00,0x00,0x08,0x14,0x22,0x41,0x00,0x14,0x14,0x14,0x14,0x14,0x00,0x41,
+    0x22,0x14,0x08,0x02,0x01,0x51,0x09,0x06,0x32,0x49,0x79,0x41,0x3E,0x7E,0x11,0x11,0x11,0x7E,0x7F,0x49,0x49,0x49,0x36,0x3E,0x41,0x41,0x41,0x22,0x7F,0x41,0x41,0x22,0x1C,0x7F,0x49,0x49,0x49,0x41,
+    0x7F,0x09,0x09,0x09,0x01,0x3E,0x41,0x49,0x49,0x7A,0x7F,0x08,0x08,0x08,0x7F,0x00,0x41,0x7F,0x41,0x00,0x20,0x40,0x41,0x3F,0x01,0x7F,0x08,0x14,0x22,0x41,0x7F,0x40,0x40,0x40,0x40,0x7F,0x02,0x0C,
+    0x02,0x7F,0x7F,0x04,0x08,0x10,0x7F,0x3E,0x41,0x41,0x41,0x3E,0x7F,0x09,0x09,0x09,0x06,0x3E,0x41,0x51,0x21,0x5E,0x7F,0x09,0x19,0x29,0x46,0x46,0x49,0x49,0x49,0x31,0x01,0x01,0x7F,0x01,0x01,0x3F,
+    0x40,0x40,0x40,0x3F,0x1F,0x20,0x40,0x20,0x1F,0x3F,0x40,0x38,0x40,0x3F,0x63,0x14,0x08,0x14,0x63,0x07,0x08,0x70,0x08,0x07,0x61,0x51,0x49,0x45,0x43,0x00,0x7F,0x41,0x41,0x00,0x02,0x04,0x08,0x10,
+    0x20,0x00,0x41,0x41,0x7F,0x00,0x04,0x02,0x01,0x02,0x04,0x40,0x40,0x40,0x40,0x40,0x00,0x01,0x02,0x04,0x00,0x20,0x54,0x54,0x54,0x78,0x7F,0x48,0x44,0x44,0x38,0x38,0x44,0x44,0x44,0x20,0x38,0x44,
+    0x44,0x48,0x7F,0x38,0x54,0x54,0x54,0x18,0x08,0x7E,0x09,0x01,0x02,0x08,0x14,0x54,0x54,0x3C,0x7F,0x08,0x04,0x04,0x78,0x00,0x44,0x7D,0x40,0x00,0x20,0x40,0x44,0x3D,0x00,0x7F,0x10,0x28,0x44,0x00,
+    0x00,0x41,0x7F,0x40,0x00,0x7C,0x04,0x18,0x04,0x78,0x7C,0x08,0x04,0x04,0x78,0x38,0x44,0x44,0x44,0x38,0x7C,0x14,0x14,0x14,0x08,0x08,0x14,0x14,0x18,0x7C,0x7C,0x08,0x04,0x04,0x08,0x48,0x54,0x54,
+    0x54,0x20,0x04,0x3F,0x44,0x40,0x20,0x3C,0x40,0x40,0x20,0x7C,0x1C,0x20,0x40,0x20,0x1C,0x3C,0x40,0x30,0x40,0x3C,0x44,0x28,0x10,0x28,0x44,0x0C,0x50,0x50,0x50,0x3C,0x44,0x64,0x54,0x4C,0x44,0x00,
+    0x08,0x36,0x41,0x00,0x00,0x00,0x7F,0x00,0x00,0x00,0x41,0x36,0x08,0x00,0x02,0x01,0x02,0x01,0x00,
+};
+
+static uint8_t spi_tx_buffer[SHARED_SPI_TX_BUFFER_SIZE];
+static volatile bool g_spi_tx_is_complete = true;
+
+static uint8_t display_buffer[LCD_PAGES][LCD_WIDTH];
+
+static void display_dc_set(bool state)
+{
+    tr_hal_gpio_pin_t dc_pin = {(uint8_t)DISPLAY_DC_PIN};
+    tr_hal_level_t level = state ? TR_HAL_GPIO_LEVEL_HIGH : TR_HAL_GPIO_LEVEL_LOW;
+    tr_hal_gpio_set_output(dc_pin, level);
+}
+
+
+static void display_rst_set(bool state)
+{
+    tr_hal_gpio_pin_t rst_pin = {(uint8_t)DISPLAY_RST_PIN};
+    tr_hal_level_t level = state ? TR_HAL_GPIO_LEVEL_HIGH : TR_HAL_GPIO_LEVEL_LOW;
+    tr_hal_gpio_set_output(rst_pin, level);
+}
+
+static void display_send_cmd(uint8_t cmd)
+{
+    display_dc_set(false);
+    tr_hal_status_t status = tr_hal_spi_raw_tx_one_byte(DISPLAY_SPI_ID, DISPLAY_CS_INDEX, cmd, true);
+
+    if (status != TR_HAL_SUCCESS)
+    {
+        DPRINTF("ERROR: display_send_cmd failed: %d\n", cmd, status);
+        return;
+    }
+}
+
+static void display_send_data(uint8_t data)
+{
+    display_dc_set(true);
+    tr_hal_status_t status = tr_hal_spi_raw_tx_one_byte(DISPLAY_SPI_ID, DISPLAY_CS_INDEX, data, true);
+
+    if (status != TR_HAL_SUCCESS)
+    {
+        DPRINTF("ERROR: display_send_data failed: %d\n", status);
+        return;
+    }
+}
+
+static void display_reset(void)
+{
+    display_rst_set(false);
+    Delay_ms(5);
+    display_rst_set(true);
+    Delay_ms(5);
+}
+
+void display_init(void)
+{
+
+    tr_hal_gpio_settings_t dc_gpio_settings = DEFAULT_GPIO_OUTPUT_CONFIG;
+    dc_gpio_settings.direction = TR_HAL_GPIO_DIRECTION_OUTPUT;
+    dc_gpio_settings.output_level = TR_HAL_GPIO_LEVEL_HIGH;
+
+    tr_hal_gpio_pin_t dc_pin = {(uint8_t)DISPLAY_DC_PIN};
+    tr_hal_status_t status = tr_hal_gpio_init(dc_pin, &dc_gpio_settings);
+    if (status != TR_HAL_SUCCESS)
+    {
+        DPRINTF("ERROR: Failed to initialize display DC pin!\n");
+    }
+
+    tr_hal_gpio_settings_t rst_gpio_settings = DEFAULT_GPIO_OUTPUT_CONFIG;
+    rst_gpio_settings.direction = TR_HAL_GPIO_DIRECTION_OUTPUT;
+    rst_gpio_settings.output_level = TR_HAL_GPIO_LEVEL_HIGH;
+
+    tr_hal_gpio_pin_t rst_pin = {(uint8_t)DISPLAY_RST_PIN};
+    status = tr_hal_gpio_init(rst_pin, &rst_gpio_settings);
+    if (status != TR_HAL_SUCCESS)
+    {
+        DPRINTF("ERROR: Failed to initialize display RST pin!\n");
+    }
+
+    display_reset();
+
+    display_send_cmd(0xA2);
+    Delay_ms(5);
+    display_send_cmd(0xA0);
+    Delay_ms(5);
+    display_send_cmd(0xC8);
+    Delay_ms(5);
+    display_send_cmd(0x24);
+    Delay_ms(5);
+    display_send_cmd(0x81);
+    Delay_ms(5);
+    display_send_cmd(30);
+    Delay_ms(5);
+    display_send_cmd(0x2F);
+    Delay_ms(5);
+    display_send_cmd(0xAF);
+    Delay_ms(5);
+
+    display_clear();
+    display_update();
+}
+
+void display_set_contrast(uint8_t contrast)
+{
+    display_send_cmd(0x81);
+
+    display_send_cmd(contrast & 0x3F);
+}
+
+void display_clear(void)
+{
+    memset(display_buffer, 0, sizeof(display_buffer));
+}
+
+void display_update(void)
+{
+    for (uint8_t page = 0; page < LCD_PAGES; page++)
+    {
+        display_send_cmd(0xB0 + page);
+        Delay_ms(5);
+
+        display_send_cmd(0x10);
+        Delay_ms(5);
+
+        display_send_cmd(0x00);
+        Delay_ms(5);
+
+        display_dc_set(true);
+
+        tr_hal_status_t status = tr_hal_spi_raw_tx_buffer(DISPLAY_SPI_ID, DISPLAY_CS_INDEX, display_buffer[page], LCD_WIDTH, true);
+
+        if (status != TR_HAL_SUCCESS)
+        {
+            DPRINTF("ERROR: tr_hal_spi_raw_tx_buffer failed: %d\n", status);
+            return;
+        }
+        Delay_ms(5);
+    }
+}
+
+static uint8_t cursor_x = 0;
+static uint8_t cursor_y_page = 0;
+
+void display_set_cursor(uint8_t row, uint8_t col)
+{
+    cursor_y_page = row;
+    cursor_x = col;
+}
+
+void display_print_string(const char *str)
+{
+    //DPRINTF("Before writing string '%s', cursor_x = %d\n", str, cursor_x); 
+    while (*str)
+    {
+        char c = *str++;
+        if (c < ' ' || c > '~')
+            c = '?';
+
+        const uint8_t *font_char = &font5x7[(c - ' ') * 5];
+
+        for (uint8_t i = 0; i < 5; i++)
+        {
+            if (cursor_x < LCD_WIDTH)
+            {
+                display_buffer[cursor_y_page][cursor_x++] = font_char[i];
+            }
+        }
+
+        if (cursor_x < LCD_WIDTH)
+        {
+            display_buffer[cursor_y_page][cursor_x++] = 0x00;
+        }
+    }
+}
+
+void display_test_on_button_press(void)
+{
+    static int press_count = 0;
+
+    display_set_contrast(50);
+    display_clear();
+
+    char dynamic_buffer[20];
+    snprintf(dynamic_buffer, sizeof(dynamic_buffer), "COUNT: %d", press_count);
+    display_set_cursor(3, 10);
+    display_print_string(dynamic_buffer);    
+
+    display_update();
+    press_count++;
+}
+
+void display_temperature(int temperature_centi_degrees)
+{
+    display_set_contrast(50);
+    display_clear();
+
+    // Convert temperature to float-like string with 2 decimal places
+    char temp_buffer[20];
+    char temp_buffer_b[20];
+
+    int integer_part = temperature_centi_degrees / 100;
+    int decimal_part = abs(temperature_centi_degrees % 100);
+
+    float temp_c = temperature_centi_degrees / 100.0f;
+    float temp_f = temp_c * 9.0f / 5.0f + 32.0f;
+
+    int integer_part_f = (int)temp_f;
+    int decimal_part_f = (int)((fabsf(temp_f - integer_part_f)) * 100.0f);
+
+    DPRINTF("Temp: %d.%02d C\n", integer_part, decimal_part);
+    DPRINTF("Temp: %d.%02d F\n", integer_part_f, decimal_part_f);
+
+    snprintf(temp_buffer, sizeof(temp_buffer), "TEMP: %d.%02d C", integer_part, decimal_part);
+    
+    display_set_cursor(3, 10);
+    display_print_string(temp_buffer);
+
+    display_set_cursor(5, 10);
+    snprintf(temp_buffer_b, sizeof(temp_buffer_b), "TEMP: %d.%02d F", integer_part_f , decimal_part_f);
+    display_print_string(temp_buffer_b);
+
+    display_update();
+}
+
+bool shared_spi_is_tx_complete(void)
+{
+    return g_spi_tx_is_complete;
+}
+
+static void internal_spi_event_handler(tr_hal_spi_id_t spi_id, uint32_t event_bitmask)
+{
+    if (event_bitmask & TR_HAL_SPI_EVENT_TRANSFER_DONE)
+    {
+        g_spi_tx_is_complete = true;
+    }
+}
+
+void initialize_spi(void)
+{
+    tr_hal_status_t status;
+
+    // Configure SPI settings and set standard pins
+    tr_hal_spi_settings_t spi_settings = SPI_CONFIG_CONTROLLER_NORMAL_MODE;
+    spi_settings.raw_tx_buffer = spi_tx_buffer;
+    spi_settings.raw_tx_buff_length = SHARED_SPI_TX_BUFFER_SIZE;
+    spi_settings.clock_pin = (tr_hal_gpio_pin_t) { SPI1_CLK_PIN_DISPLAY };
+    spi_settings.io_0_pin = (tr_hal_gpio_pin_t) { SPI1_IO0_PIN_DISPLAY };
+    spi_settings.io_1_pin = (tr_hal_gpio_pin_t) { SPI1_IO1_PIN_DISPLAY };
+    spi_settings.chip_select_0 =  (tr_hal_gpio_pin_t) { SPI1_CS0_PIN_DISPLAY };
+
+
+    status = tr_hal_spi_init(DISPLAY_SPI_ID, &spi_settings);
+    if (status != TR_HAL_SUCCESS) {
+        DPRINTF("SPI1 init failed with status: %d\n", status);
+    } else {
+        DPRINT("SPI1 initialized successfully\n");
+    }
+}

@@ -11,14 +11,14 @@
 #include "Assert.h"
 #include "MfgTokens.h"
 #include "DebugPrintConfig.h"
-//#define DEBUGPRINT
+#define DEBUGPRINT
 #include "DebugPrint.h"
 #include "ZAF_file_ids.h"
 #include "ZAF_nvm_app.h"
 #include "ZAF_nvm.h"
 #include "AppTimer.h"
 #include "ZW_system_startup_api.h"
-#include "CC_Battery.h"
+// #include "CC_Battery.h"
 #include "CC_MultilevelSensor_Support.h"
 #include "ZAF_Common_helper.h"
 #include "ZAF_Common_interface.h"
@@ -37,6 +37,9 @@
 #ifdef DEBUGPRINT
 #include "ZAF_PrintAppInfo.h"
 #endif
+
+#include "max6675.h"
+#include "st7565.h"
 
 static zpal_pm_handle_t radio_power_lock;
 
@@ -158,6 +161,10 @@ ApplicationTask(SApplicationHandles* pAppHandles)
   DPRINTF("IsWakeupCausedByRtccTimeout=%s\n", (IsWakeupCausedByRtccTimeout()) ? "true" : "false");
   DPRINTF("CompletedSleepDurationMs   =%u\n", GetCompletedSleepDurationMs());
 
+  max6675_init();
+  initialize_spi();
+  display_init();
+
   // Wait for and process events
   DPRINT("Multilevel Sensor Event Distributor Started\n");
   for (;; ) {
@@ -178,11 +185,12 @@ ApplicationTask(SApplicationHandles* pAppHandles)
 void
 zaf_event_distributor_app_event_manager(const uint8_t event)
 {
-  DPRINTF("zaf_event_distributor_app_event_manager Ev: 0x%02x\r\n", event);
+  DPRINTF("zaf_event_distributor_app_event_manager Ev: 0x%02x\r\n", event);  
 
   switch (event) {
     case EVENT_APP_SEND_BATTERY_LEVEL_AND_SENSOR_REPORT:
-      (void) CC_Battery_LevelReport_tx(NULL,ENDPOINT_ROOT, NULL);
+      // (void) CC_Battery_LevelReport_tx(NULL,ENDPOINT_ROOT, NULL);      
+      // display_test_on_button_press();
       cc_multilevel_sensor_send_sensor_data();
       break;
     default:
