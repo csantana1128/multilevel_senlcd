@@ -13,3 +13,4 @@ typedef enum
 max6675_status_t max6675_init(void);
 max6675_status_t max6675_read_temperature(int *temp_x100);
 void max6675_example_usage(void);
+void init_timer_30s(void);

@@ -30,6 +30,7 @@ set(APP_SOURCES
   custom/max6675.c
   custom/st7565.c
   ${CMAKE_SOURCE_DIR}/tridentiot-sdk/framework/hal/T32CZ20/tr_hal_spi.c
+  ${CMAKE_SOURCE_DIR}/tridentiot-sdk/framework/hal/T32CZ20/tr_hal_timers.c
 )
 
 set(ZW_DEFINITIONS
@@ -76,4 +77,5 @@ IF( CMAKE_BUILD_TYPE MATCHES Release OR CMAKE_BUILD_TYPE MATCHES Debug )
     "${ZW_DEFINITIONS}"
     "${FREQ_LIST}"
   )
+  target_link_options(multilevel_max6675_dkncz20_usb_t32cz20.elf PRIVATE -Wl,--allow-multiple-definition)
 ENDIF()

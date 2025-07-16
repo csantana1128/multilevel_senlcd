@@ -164,6 +164,7 @@ ApplicationTask(SApplicationHandles* pAppHandles)
   max6675_init();
   initialize_spi();
   display_init();
+  init_timer_30s();
 
   // Wait for and process events
   DPRINT("Multilevel Sensor Event Distributor Started\n");
