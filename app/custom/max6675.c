@@ -30,12 +30,8 @@ void init_timer_30s(void)
 
     
     timer_settings_30s.timer_start_value = 32000 * 30; 
-    timer_settings_30s.prescalar = TR_HAL_TIMER_PRESCALER_1024;
-    timer_settings_30s.interrupt_enabled = true;
-    timer_settings_30s.timer_repeats = true;
     timer_settings_30s.timer_enabled = true;
     timer_settings_30s.event_handler_fx = timer_30sec_callback;
-    timer_settings_30s.interrupt_priority = TR_HAL_INTERRUPT_PRIORITY_5;
     status = tr_hal_timer_init(TIMER_0_ID, &timer_settings_30s);
     if (status == TR_HAL_SUCCESS)
     {
