@@ -7,8 +7,47 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "max6675.h"
+#include "events.h"
 
 static bool max6675_initialized = false;
+
+static tr_hal_timer_settings_t timer_settings_30s = DEFAULT_32MHZ_TIMER_CONFIG;
+
+static void timer_30sec_callback(tr_hal_timer_id_t expired_timer_id)
+{
+   if (expired_timer_id == TIMER_0_ID)
+    {
+        DPRINT("Timer 30s runing\n");
+        //cc_multilevel_sensor_send_sensor_data();
+        zaf_event_distributor_app_event_manager(EVENT_APP_SEND_BATTERY_LEVEL_AND_SENSOR_REPORT);
+    }
+}
+
+
+void init_timer_30s(void)
+{
+    tr_hal_status_t status;
+
+    
+    timer_settings_30s.timer_start_value = 32000 * 30; 
+    timer_settings_30s.prescalar = TR_HAL_TIMER_PRESCALER_1024;
+    timer_settings_30s.interrupt_enabled = true;
+    timer_settings_30s.timer_repeats = true;
+    timer_settings_30s.timer_enabled = true;
+    timer_settings_30s.event_handler_fx = timer_30sec_callback;
+    timer_settings_30s.interrupt_priority = TR_HAL_INTERRUPT_PRIORITY_5;
+    status = tr_hal_timer_init(TIMER_0_ID, &timer_settings_30s);
+    if (status == TR_HAL_SUCCESS)
+    {
+        DPRINT("Timer init correctly\n");
+        tr_hal_timer_start(TIMER_0_ID);
+        DPRINT("Timer 0 start\n");
+    }
+    else
+    {
+        DPRINT("Error init timer\n");
+    }
+}
 
 max6675_status_t max6675_init(void)
 {
